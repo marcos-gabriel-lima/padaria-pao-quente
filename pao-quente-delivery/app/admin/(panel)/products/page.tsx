@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Pencil, Trash2, Plus, Star } from "lucide-react";
 import { CATEGORIES, type Product } from "@/db/schema";
 import { formatBRL } from "@/lib/money";
@@ -31,6 +31,21 @@ export default function AdminProductsPage() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<FormState>(empty);
   const [saving, setSaving] = useState(false);
+
+  const [filterCategory, setFilterCategory] = useState("");
+  const [filterAvailable, setFilterAvailable] = useState("");
+  const [filterFeatured, setFilterFeatured] = useState("");
+
+  const filtered = useMemo(() => {
+    let list = [...items];
+    if (filterCategory) list = list.filter((p) => p.category === filterCategory);
+    if (filterAvailable === "yes") list = list.filter((p) => p.available);
+    if (filterAvailable === "no") list = list.filter((p) => !p.available);
+    if (filterFeatured === "yes") list = list.filter((p) => p.featured);
+    if (filterFeatured === "no") list = list.filter((p) => !p.featured);
+    list.sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+    return list;
+  }, [items, filterCategory, filterAvailable, filterFeatured]);
 
   async function load() {
     const res = await fetch("/api/admin/products");
@@ -99,6 +114,37 @@ export default function AdminProductsPage() {
         </button>
       </div>
 
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <select
+          className="input w-auto"
+          value={filterCategory}
+          onChange={(e) => setFilterCategory(e.target.value)}
+        >
+          <option value="">Todas as categorias</option>
+          {CATEGORIES.map((c) => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+        </select>
+        <select
+          className="input w-auto"
+          value={filterAvailable}
+          onChange={(e) => setFilterAvailable(e.target.value)}
+        >
+          <option value="">Disponibilidade</option>
+          <option value="yes">Disponível</option>
+          <option value="no">Indisponível</option>
+        </select>
+        <select
+          className="input w-auto"
+          value={filterFeatured}
+          onChange={(e) => setFilterFeatured(e.target.value)}
+        >
+          <option value="">Oferta do dia</option>
+          <option value="yes">Destaque</option>
+          <option value="no">Sem destaque</option>
+        </select>
+      </div>
+
       <div className="overflow-hidden rounded-2xl bg-white shadow ring-1 ring-coffee-100">
         <table className="w-full text-sm">
           <thead className="bg-coffee-50 text-left text-coffee-700">
@@ -112,7 +158,7 @@ export default function AdminProductsPage() {
             </tr>
           </thead>
           <tbody>
-            {items.map((p) => (
+            {filtered.map((p) => (
               <tr key={p.id} className="border-t border-coffee-100">
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
@@ -156,7 +202,7 @@ export default function AdminProductsPage() {
                 </td>
               </tr>
             ))}
-            {items.length === 0 && (
+            {filtered.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-4 py-8 text-center text-coffee-500">
                   Nenhum produto cadastrado.
