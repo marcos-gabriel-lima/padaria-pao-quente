@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Pencil, Trash2, Plus, Star } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Pencil, Trash2, Plus, Star, Upload, Link, Loader2 } from "lucide-react";
 import { CATEGORIES, type Product } from "@/db/schema";
 import { formatBRL } from "@/lib/money";
 
@@ -292,15 +292,10 @@ export default function AdminProductsPage() {
                 </select>
               </div>
             </div>
-            <div>
-              <label className="label">URL da imagem</label>
-              <input
-                className="input"
-                placeholder="https://..."
-                value={form.imageUrl}
-                onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
-              />
-            </div>
+            <ImageField
+              value={form.imageUrl}
+              onChange={(url) => setForm({ ...form, imageUrl: url })}
+            />
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="label">Disponibilidade</label>
@@ -348,6 +343,105 @@ export default function AdminProductsPage() {
           </form>
         </div>
       )}
+    </div>
+  );
+}
+
+function ImageField({ value, onChange }: { value: string; onChange: (url: string) => void }) {
+  const [mode, setMode] = useState<"upload" | "url">(value && value.startsWith("http") ? "url" : "upload");
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadError(null);
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erro no upload");
+      onChange(data.url);
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Erro no upload");
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
+
+  return (
+    <div>
+      <div className="mb-1 flex items-center gap-2">
+        <label className="label mb-0">Imagem</label>
+        <div className="flex rounded-lg border border-coffee-200 text-xs">
+          <button
+            type="button"
+            onClick={() => setMode("upload")}
+            className={`flex items-center gap-1 rounded-l-lg px-2 py-1 font-semibold transition ${
+              mode === "upload" ? "bg-coffee-600 text-white" : "text-coffee-600 hover:bg-coffee-50"
+            }`}
+          >
+            <Upload className="h-3 w-3" /> Upload
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("url")}
+            className={`flex items-center gap-1 rounded-r-lg px-2 py-1 font-semibold transition ${
+              mode === "url" ? "bg-coffee-600 text-white" : "text-coffee-600 hover:bg-coffee-50"
+            }`}
+          >
+            <Link className="h-3 w-3" /> URL
+          </button>
+        </div>
+      </div>
+
+      {mode === "upload" ? (
+        <div className="flex items-center gap-3">
+          <label
+            className={`flex cursor-pointer items-center gap-2 rounded-xl border-2 border-dashed border-coffee-200 px-4 py-3 text-sm font-semibold text-coffee-600 transition hover:border-coffee-400 hover:bg-coffee-50 ${
+              uploading ? "pointer-events-none opacity-50" : ""
+            }`}
+          >
+            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+            {uploading ? "Enviando..." : "Escolher imagem"}
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={handleFile}
+            />
+          </label>
+          {value && (
+            <div className="flex items-center gap-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={value} alt="Preview" className="h-12 w-12 rounded-lg object-cover ring-1 ring-coffee-100" />
+              <button type="button" onClick={() => onChange("")} className="text-xs text-red-600 hover:underline">
+                remover
+              </button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="flex items-center gap-2">
+          <input
+            className="input flex-1"
+            placeholder="https://..."
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+          />
+          {value && isSafeImageUrl(value) && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={value} alt="Preview" className="h-10 w-10 rounded-lg object-cover ring-1 ring-coffee-100" />
+          )}
+        </div>
+      )}
+
+      {uploadError && <p className="mt-1 text-xs text-red-600">{uploadError}</p>}
     </div>
   );
 }
