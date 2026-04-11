@@ -5,13 +5,16 @@ import { Pencil, Trash2, Plus, Star } from "lucide-react";
 import { CATEGORIES, type Product } from "@/db/schema";
 import { formatBRL } from "@/lib/money";
 
+type Availability = "available" | "unavailable" | "unlimited";
+
 type FormState = {
   name: string;
   description: string;
   price: string;
   category: string;
   imageUrl: string;
-  available: boolean;
+  availability: Availability;
+  stock: string;
   featured: boolean;
 };
 
@@ -21,9 +24,15 @@ const empty: FormState = {
   price: "",
   category: CATEGORIES[0],
   imageUrl: "",
-  available: true,
+  availability: "unlimited",
+  stock: "0",
   featured: false,
 };
+
+function isSafeImageUrl(url: string): boolean {
+  if (!url) return false;
+  try { return new URL(url).protocol === "https:"; } catch { return false; }
+}
 
 export default function AdminProductsPage() {
   const [items, setItems] = useState<Product[]>([]);
@@ -31,6 +40,7 @@ export default function AdminProductsPage() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<FormState>(empty);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const [filterCategory, setFilterCategory] = useState("");
   const [filterAvailable, setFilterAvailable] = useState("");
@@ -39,8 +49,9 @@ export default function AdminProductsPage() {
   const filtered = useMemo(() => {
     let list = [...items];
     if (filterCategory) list = list.filter((p) => p.category === filterCategory);
-    if (filterAvailable === "yes") list = list.filter((p) => p.available);
-    if (filterAvailable === "no") list = list.filter((p) => !p.available);
+    if (filterAvailable === "available") list = list.filter((p) => p.availability === "available");
+    if (filterAvailable === "unavailable") list = list.filter((p) => p.availability === "unavailable");
+    if (filterAvailable === "unlimited") list = list.filter((p) => p.availability === "unlimited");
     if (filterFeatured === "yes") list = list.filter((p) => p.featured);
     if (filterFeatured === "no") list = list.filter((p) => !p.featured);
     list.sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
@@ -69,7 +80,8 @@ export default function AdminProductsPage() {
       price: String(p.price),
       category: p.category,
       imageUrl: p.imageUrl,
-      available: p.available,
+      availability: p.availability,
+      stock: String(p.stock),
       featured: p.featured,
     });
     setShowForm(true);
@@ -77,14 +89,26 @@ export default function AdminProductsPage() {
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
+    setSaveError(null);
+    if (form.imageUrl && !isSafeImageUrl(form.imageUrl)) {
+      setSaveError("URL da imagem deve usar protocolo https://");
+      return;
+    }
     setSaving(true);
     const payload = {
       ...form,
       price: Number(form.price),
+      stock: Number(form.stock),
     };
     const url = editing ? `/api/admin/products/${editing.id}` : "/api/admin/products";
     const method = editing ? "PATCH" : "POST";
-    await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setSaveError(data.error || "Erro ao salvar produto");
+      setSaving(false);
+      return;
+    }
     setSaving(false);
     setShowForm(false);
     load();
@@ -96,11 +120,20 @@ export default function AdminProductsPage() {
     load();
   }
 
-  async function toggle(p: Product, field: "available" | "featured") {
+  async function toggleFeatured(p: Product) {
     await fetch(`/api/admin/products/${p.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ [field]: !p[field] }),
+      body: JSON.stringify({ featured: !p.featured }),
+    });
+    load();
+  }
+
+  async function changeAvailability(p: Product, value: Availability, stock?: number) {
+    await fetch(`/api/admin/products/${p.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ availability: value, ...(stock !== undefined ? { stock } : {}) }),
     });
     load();
   }
@@ -131,8 +164,9 @@ export default function AdminProductsPage() {
           onChange={(e) => setFilterAvailable(e.target.value)}
         >
           <option value="">Disponibilidade</option>
-          <option value="yes">Disponível</option>
-          <option value="no">Indisponível</option>
+          <option value="available">Disponível</option>
+          <option value="unavailable">Indisponível</option>
+          <option value="unlimited">Ilimitado</option>
         </select>
         <select
           className="input w-auto"
@@ -163,7 +197,7 @@ export default function AdminProductsPage() {
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
                     <div className="h-12 w-12 overflow-hidden rounded-lg bg-coffee-100">
-                      {p.imageUrl && (
+                      {isSafeImageUrl(p.imageUrl) && (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={p.imageUrl} alt={p.name} className="h-full w-full object-cover" />
                       )}
@@ -177,11 +211,11 @@ export default function AdminProductsPage() {
                 <td className="px-4 py-3 text-coffee-700">{p.category}</td>
                 <td className="px-4 py-3 font-semibold text-coffee-800">{formatBRL(p.price)}</td>
                 <td className="px-4 py-3">
-                  <Toggle on={p.available} onClick={() => toggle(p, "available")} />
+                  <AvailabilityControl product={p} onChange={changeAvailability} />
                 </td>
                 <td className="px-4 py-3">
                   <button
-                    onClick={() => toggle(p, "featured")}
+                    onClick={() => toggleFeatured(p)}
                     className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${
                       p.featured ? "bg-amber-100 text-amber-800" : "bg-coffee-50 text-coffee-500"
                     }`}
@@ -267,26 +301,44 @@ export default function AdminProductsPage() {
                 onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
               />
             </div>
-            <div className="flex gap-4">
-              <label className="flex items-center gap-2 text-sm font-semibold text-coffee-700">
-                <input
-                  type="checkbox"
-                  checked={form.available}
-                  onChange={(e) => setForm({ ...form, available: e.target.checked })}
-                />
-                Disponível
-              </label>
-              <label className="flex items-center gap-2 text-sm font-semibold text-coffee-700">
-                <input
-                  type="checkbox"
-                  checked={form.featured}
-                  onChange={(e) => setForm({ ...form, featured: e.target.checked })}
-                />
-                Oferta do dia
-              </label>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="label">Disponibilidade</label>
+                <select
+                  className="input"
+                  value={form.availability}
+                  onChange={(e) => setForm({ ...form, availability: e.target.value as Availability })}
+                >
+                  <option value="unlimited">Ilimitado</option>
+                  <option value="available">Disponível (com estoque)</option>
+                  <option value="unavailable">Indisponível</option>
+                </select>
+              </div>
+              {form.availability === "available" && (
+                <div>
+                  <label className="label">Quantidade em estoque</label>
+                  <input
+                    className="input"
+                    type="number"
+                    min="0"
+                    required
+                    value={form.stock}
+                    onChange={(e) => setForm({ ...form, stock: e.target.value })}
+                  />
+                </div>
+              )}
             </div>
+            <label className="flex items-center gap-2 text-sm font-semibold text-coffee-700">
+              <input
+                type="checkbox"
+                checked={form.featured}
+                onChange={(e) => setForm({ ...form, featured: e.target.checked })}
+              />
+              Oferta do dia
+            </label>
+            {saveError && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{saveError}</p>}
             <div className="flex justify-end gap-2 pt-2">
-              <button type="button" onClick={() => setShowForm(false)} className="btn-outline">
+              <button type="button" onClick={() => { setShowForm(false); setSaveError(null); }} className="btn-outline">
                 Cancelar
               </button>
               <button type="submit" disabled={saving} className="btn-primary">
@@ -300,15 +352,79 @@ export default function AdminProductsPage() {
   );
 }
 
-function Toggle({ on, onClick }: { on: boolean; onClick: () => void }) {
+function AvailabilityControl({
+  product: p,
+  onChange,
+}: {
+  product: Product;
+  onChange: (p: Product, value: Availability, stock?: number) => void;
+}) {
+  const [editStock, setEditStock] = useState(false);
+  const [stockVal, setStockVal] = useState(String(p.stock));
+
+  const labels: Record<Availability, { text: string; cls: string }> = {
+    unlimited: { text: "Ilimitado", cls: "bg-blue-100 text-blue-800" },
+    available: { text: `Disponível (${p.stock})`, cls: "bg-green-100 text-green-800" },
+    unavailable: { text: "Indisponível", cls: "bg-red-100 text-red-800" },
+  };
+
+  const current = labels[p.availability];
+
   return (
-    <button
-      onClick={onClick}
-      className={`relative h-6 w-11 rounded-full transition ${on ? "bg-green-600" : "bg-coffee-300"}`}
-    >
-      <span
-        className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition ${on ? "left-5" : "left-0.5"}`}
-      />
-    </button>
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center gap-1">
+        <select
+          className="rounded-lg border border-coffee-200 bg-white px-2 py-1 text-xs font-semibold"
+          value={p.availability}
+          onChange={(e) => {
+            const val = e.target.value as Availability;
+            if (val === "available") {
+              setEditStock(true);
+              setStockVal(String(p.stock || 1));
+            } else {
+              onChange(p, val);
+            }
+          }}
+        >
+          <option value="unlimited">Ilimitado</option>
+          <option value="available">Disponível</option>
+          <option value="unavailable">Indisponível</option>
+        </select>
+        <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${current.cls}`}>
+          {current.text}
+        </span>
+      </div>
+      {(editStock || p.availability === "available") && editStock && (
+        <div className="flex items-center gap-1">
+          <input
+            type="number"
+            min="1"
+            className="w-16 rounded border border-coffee-200 px-2 py-1 text-xs"
+            value={stockVal}
+            onChange={(e) => setStockVal(e.target.value)}
+          />
+          <button
+            onClick={() => { onChange(p, "available", Number(stockVal)); setEditStock(false); }}
+            className="rounded bg-green-600 px-2 py-1 text-xs font-semibold text-white hover:bg-green-700"
+          >
+            OK
+          </button>
+          <button
+            onClick={() => setEditStock(false)}
+            className="text-xs text-coffee-500 hover:underline"
+          >
+            cancelar
+          </button>
+        </div>
+      )}
+      {p.availability === "available" && !editStock && (
+        <button
+          onClick={() => { setEditStock(true); setStockVal(String(p.stock)); }}
+          className="text-left text-xs text-coffee-500 hover:underline"
+        >
+          alterar estoque
+        </button>
+      )}
+    </div>
   );
 }

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
 import { orders, products } from "@/db/schema";
-import { inArray } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 
 const orderSchema = z.object({
   customerName: z.string().min(2),
@@ -37,9 +37,18 @@ export async function POST(req: Request) {
   if (dbProducts.length !== ids.length) {
     return NextResponse.json({ error: "Produto inexistente" }, { status: 400 });
   }
-  const unavailable = dbProducts.find((p) => !p.available);
-  if (unavailable) {
-    return NextResponse.json({ error: `Produto indisponível: ${unavailable.name}` }, { status: 400 });
+  // Check availability and stock for each item
+  for (const item of data.items) {
+    const p = dbProducts.find((pp) => pp.id === item.id)!;
+    if (p.availability === "unavailable") {
+      return NextResponse.json({ error: `Produto indisponível: ${p.name}` }, { status: 400 });
+    }
+    if (p.availability === "available" && p.stock < item.quantity) {
+      return NextResponse.json(
+        { error: `Estoque insuficiente para ${p.name}. Restam ${p.stock} unidade(s).` },
+        { status: 400 }
+      );
+    }
   }
 
   const itemsResolved = data.items.map((i) => {
@@ -64,6 +73,21 @@ export async function POST(req: Request) {
       itemsJson: JSON.stringify(itemsResolved),
     })
     .returning();
+
+  // Decrement stock for "available" products and auto-mark unavailable if stock hits 0
+  for (const item of data.items) {
+    const p = dbProducts.find((pp) => pp.id === item.id)!;
+    if (p.availability === "available") {
+      const newStock = p.stock - item.quantity;
+      await db
+        .update(products)
+        .set({
+          stock: newStock,
+          ...(newStock <= 0 ? { availability: "unavailable" as const } : {}),
+        })
+        .where(eq(products.id, p.id));
+    }
+  }
 
   return NextResponse.json({ order: inserted[0], items: itemsResolved, total });
 }

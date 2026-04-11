@@ -10,8 +10,14 @@ const updateSchema = z.object({
   description: z.string().optional(),
   price: z.number().nonnegative().optional(),
   category: z.enum(CATEGORIES).optional(),
-  imageUrl: z.string().url().or(z.literal("")).optional(),
-  available: z.boolean().optional(),
+  imageUrl: z
+    .string()
+    .url()
+    .refine((u) => { try { return new URL(u).protocol === "https:"; } catch { return false; } }, { message: "Apenas URLs https são permitidas" })
+    .or(z.literal(""))
+    .optional(),
+  availability: z.enum(["available", "unavailable", "unlimited"]).optional(),
+  stock: z.number().int().nonnegative().optional(),
   featured: z.boolean().optional(),
 });
 

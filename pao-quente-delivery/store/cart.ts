@@ -10,6 +10,7 @@ export type CartItem = {
   imageUrl: string;
   category: string;
   quantity: number;
+  maxStock: number | null; // null = unlimited
   notes?: string;
 };
 
@@ -50,13 +51,17 @@ export const useCart = create<CartState>()(
         set((s) => {
           const existing = s.items.find((i) => i.id === item.id);
           if (existing) {
+            let newQty = existing.quantity + quantity;
+            if (existing.maxStock !== null && newQty > existing.maxStock) newQty = existing.maxStock;
             return {
               items: s.items.map((i) =>
-                i.id === item.id ? { ...i, quantity: i.quantity + quantity } : i
+                i.id === item.id ? { ...i, quantity: newQty } : i
               ),
             };
           }
-          return { items: [...s.items, { ...item, quantity }] };
+          const max = item.maxStock;
+          const clampedQty = max !== null && quantity > max ? max : quantity;
+          return { items: [...s.items, { ...item, quantity: clampedQty }] };
         }),
       remove: (id) => set((s) => ({ items: s.items.filter((i) => i.id !== id) })),
       updateQty: (id, quantity) =>
@@ -64,7 +69,11 @@ export const useCart = create<CartState>()(
           items:
             quantity <= 0
               ? s.items.filter((i) => i.id !== id)
-              : s.items.map((i) => (i.id === id ? { ...i, quantity } : i)),
+              : s.items.map((i) => {
+                  if (i.id !== id) return i;
+                  const clamped = i.maxStock !== null && quantity > i.maxStock ? i.maxStock : quantity;
+                  return { ...i, quantity: clamped };
+                }),
         })),
       clear: () => set({ items: [] }),
       open: () => set({ isOpen: true }),

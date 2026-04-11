@@ -10,8 +10,13 @@ const productSchema = z.object({
   description: z.string().default(""),
   price: z.number().nonnegative(),
   category: z.enum(CATEGORIES),
-  imageUrl: z.string().url().or(z.literal("")),
-  available: z.boolean().default(true),
+  imageUrl: z
+    .string()
+    .url()
+    .refine((u) => { try { return new URL(u).protocol === "https:"; } catch { return false; } }, { message: "Apenas URLs https são permitidas" })
+    .or(z.literal("")),
+  availability: z.enum(["available", "unavailable", "unlimited"]).default("unlimited"),
+  stock: z.number().int().nonnegative().default(0),
   featured: z.boolean().default(false),
 });
 

@@ -16,7 +16,7 @@ export default function Menu() {
       .then(setProducts);
   }, []);
 
-  const featured = useMemo(() => products?.filter((p) => p.featured && p.available) ?? [], [products]);
+  const featured = useMemo(() => products?.filter((p) => p.featured && p.availability !== "unavailable") ?? [], [products]);
 
   const filtered = useMemo(() => {
     if (!products) return [];

@@ -8,7 +8,8 @@ export const products = sqliteTable("products", {
   price: real("price").notNull(),
   category: text("category").notNull(),
   imageUrl: text("image_url").notNull().default(""),
-  available: integer("available", { mode: "boolean" }).notNull().default(true),
+  availability: text("availability", { enum: ["available", "unavailable", "unlimited"] }).notNull().default("unlimited"),
+  stock: integer("stock").notNull().default(0),
   featured: integer("featured", { mode: "boolean" }).notNull().default(false),
   createdAt: text("created_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
 });

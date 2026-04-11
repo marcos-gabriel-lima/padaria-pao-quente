@@ -13,11 +13,11 @@ export default function UpsellModal({ onClose, onSkip }: { onClose: () => void; 
   useEffect(() => {
     fetch("/api/products")
       .then((r) => r.json())
-      .then((all: Product[]) => setBeverages(all.filter((p) => p.category === "Bebidas" && p.available)));
+      .then((all: Product[]) => setBeverages(all.filter((p) => p.category === "Bebidas" && p.availability !== "unavailable")));
   }, []);
 
   function handleAdd(p: Product) {
-    add({ id: p.id, name: p.name, price: p.price, imageUrl: p.imageUrl, category: p.category }, 1);
+    add({ id: p.id, name: p.name, price: p.price, imageUrl: p.imageUrl, category: p.category, maxStock: p.availability === "available" ? p.stock : null }, 1);
     onSkip();
   }
 
