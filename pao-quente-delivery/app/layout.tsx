@@ -5,6 +5,9 @@ export const metadata: Metadata = {
   title: "Padaria Pão Quente — Delivery",
   description:
     "Pães, salgados, doces, bolos e bebidas fresquinhos com entrega rápida em José Bonifácio - SP. Peça pelo WhatsApp.",
+  icons: {
+    icon: "/favicon.svg",
+  },
   openGraph: {
     title: "Padaria Pão Quente — Delivery",
     description: "Peça pães e quitutes fresquinhos pelo WhatsApp.",

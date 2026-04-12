@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="crust" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#E8C478"/>
+      <stop offset="100%" stop-color="#A0723C"/>
+    </linearGradient>
+    <linearGradient id="crumb" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F5DCA0"/>
+      <stop offset="100%" stop-color="#E0BA6A"/>
+    </linearGradient>
+    <linearGradient id="wheat" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#B8882E"/>
+      <stop offset="100%" stop-color="#D4A84A"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Left wheat stalk -->
+  <g opacity="0.7">
+    <path d="M45 170 Q40 130 50 90" stroke="#C49A4A" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <ellipse cx="44" cy="95" rx="6" ry="12" fill="url(#wheat)" transform="rotate(-20 44 95)"/>
+    <ellipse cx="40" cy="110" rx="5" ry="10" fill="url(#wheat)" transform="rotate(-25 40 110)"/>
+    <ellipse cx="52" cy="102" rx="5" ry="10" fill="url(#wheat)" transform="rotate(15 52 102)"/>
+    <ellipse cx="43" cy="125" rx="5" ry="9" fill="url(#wheat)" transform="rotate(-20 43 125)"/>
+    <ellipse cx="53" cy="118" rx="5" ry="9" fill="url(#wheat)" transform="rotate(18 53 118)"/>
+  </g>
+
+  <!-- Right wheat stalk -->
+  <g opacity="0.7">
+    <path d="M155 170 Q160 130 150 90" stroke="#C49A4A" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <ellipse cx="156" cy="95" rx="6" ry="12" fill="url(#wheat)" transform="rotate(20 156 95)"/>
+    <ellipse cx="160" cy="110" rx="5" ry="10" fill="url(#wheat)" transform="rotate(25 160 110)"/>
+    <ellipse cx="148" cy="102" rx="5" ry="10" fill="url(#wheat)" transform="rotate(-15 148 102)"/>
+    <ellipse cx="157" cy="125" rx="5" ry="9" fill="url(#wheat)" transform="rotate(20 157 125)"/>
+    <ellipse cx="147" cy="118" rx="5" ry="9" fill="url(#wheat)" transform="rotate(-18 147 118)"/>
+  </g>
+
+  <!-- Shadow under bread -->
+  <ellipse cx="100" cy="158" rx="42" ry="6" fill="#8B5A2B" opacity="0.15"/>
+
+  <!-- Main bread body -->
+  <ellipse cx="100" cy="130" rx="48" ry="30" fill="url(#crust)"/>
+
+  <!-- Bread top dome -->
+  <ellipse cx="100" cy="115" rx="42" ry="32" fill="url(#crumb)"/>
+
+  <!-- Bread shine highlight -->
+  <ellipse cx="88" cy="102" rx="18" ry="10" fill="#F7E6B8" opacity="0.5" transform="rotate(-8 88 102)"/>
+
+  <!-- Score lines (cuts) -->
+  <path d="M72 112 Q82 100 92 110" stroke="#C49A4A" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M88 108 Q100 96 112 108" stroke="#C49A4A" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M108 112 Q118 100 128 110" stroke="#C49A4A" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+
+  <!-- Inner score detail -->
+  <path d="M76 111 Q84 103 90 109" stroke="#D4B060" stroke-width="1" fill="none" stroke-linecap="round" opacity="0.5"/>
+  <path d="M92 107 Q100 99 108 107" stroke="#D4B060" stroke-width="1" fill="none" stroke-linecap="round" opacity="0.5"/>
+  <path d="M110 111 Q116 103 124 109" stroke="#D4B060" stroke-width="1" fill="none" stroke-linecap="round" opacity="0.5"/>
+
+  <!-- Steam lines -->
+  <g opacity="0.45" stroke="#F5DCA0" stroke-width="2" fill="none" stroke-linecap="round">
+    <path d="M80 78 Q76 65 82 55 Q78 48 83 40">
+      <animate attributeName="opacity" values="0.2;0.5;0.2" dur="2.5s" repeatCount="indefinite"/>
+      <animate attributeName="d" values="M80 78 Q76 65 82 55 Q78 48 83 40;M80 78 Q84 63 78 53 Q82 45 78 38;M80 78 Q76 65 82 55 Q78 48 83 40" dur="3s" repeatCount="indefinite"/>
+    </path>
+    <path d="M100 73 Q96 58 102 48 Q98 38 103 28">
+      <animate attributeName="opacity" values="0.3;0.6;0.3" dur="2s" repeatCount="indefinite"/>
+      <animate attributeName="d" values="M100 73 Q96 58 102 48 Q98 38 103 28;M100 73 Q104 56 98 46 Q102 36 98 26;M100 73 Q96 58 102 48 Q98 38 103 28" dur="2.8s" repeatCount="indefinite"/>
+    </path>
+    <path d="M120 78 Q116 65 122 55 Q118 48 123 40">
+      <animate attributeName="opacity" values="0.25;0.55;0.25" dur="2.2s" repeatCount="indefinite"/>
+      <animate attributeName="d" values="M120 78 Q116 65 122 55 Q118 48 123 40;M120 78 Q124 63 118 53 Q122 45 118 38;M120 78 Q116 65 122 55 Q118 48 123 40" dur="3.2s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Small sparkles -->
+  <circle cx="65" cy="70" r="2" fill="#F7E6B8" opacity="0.6">
+    <animate attributeName="opacity" values="0;0.6;0" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="140" cy="65" r="1.5" fill="#F7E6B8" opacity="0.4">
+    <animate attributeName="opacity" values="0;0.5;0" dur="2.5s" repeatCount="indefinite" begin="0.8s"/>
+  </circle>
+  <circle cx="100" cy="22" r="1.8" fill="#F7E6B8" opacity="0.5">
+    <animate attributeName="opacity" values="0;0.6;0" dur="1.8s" repeatCount="indefinite" begin="0.4s"/>
+  </circle>
+</svg>

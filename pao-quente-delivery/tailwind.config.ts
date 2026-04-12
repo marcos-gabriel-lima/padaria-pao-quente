@@ -23,6 +23,15 @@ const config: Config = {
         sans: ["system-ui", "-apple-system", "Segoe UI", "sans-serif"],
         display: ["Georgia", "serif"],
       },
+      animation: {
+        float: "float 3s ease-in-out infinite",
+      },
+      keyframes: {
+        float: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-12px)" },
+        },
+      },
     },
   },
   plugins: [],
