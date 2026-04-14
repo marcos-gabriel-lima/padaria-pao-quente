@@ -1,3 +1,7 @@
+// Seed do banco — insere produtos de exemplo para desenvolvimento
+import { config } from "dotenv";
+config({ path: ".env.local" });
+
 import { db } from "./index";
 import { products } from "./schema";
 
@@ -108,4 +112,4 @@ async function main() {
   console.log(`Inserted ${seed.length} products.`);
 }
 
-main();
+main().then(() => process.exit(0));

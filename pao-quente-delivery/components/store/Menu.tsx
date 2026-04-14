@@ -1,3 +1,4 @@
+// Cardápio da loja — lista de produtos com busca, filtro por categoria e destaques
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -51,6 +52,7 @@ export default function Menu() {
 
       <h2 className="font-display text-2xl text-coffee-800 sm:text-3xl">Cardápio completo</h2>
 
+      {/* Busca + filtro por categoria */}
       <div className="mt-4 mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-coffee-400" />

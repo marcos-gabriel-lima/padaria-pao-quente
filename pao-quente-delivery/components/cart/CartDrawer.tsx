@@ -1,3 +1,4 @@
+// Drawer lateral do carrinho — lista itens, controla quantidade e navega para checkout
 "use client";
 
 import { useState } from "react";
@@ -23,6 +24,7 @@ export default function CartDrawer() {
 
   function handleProceed() {
     if (items.length === 0) return;
+    // Sugere bebida se o carrinho não tem nenhuma
     if (!hasBev) {
       setShowUpsell(true);
       return;
@@ -37,10 +39,13 @@ export default function CartDrawer() {
 
   return (
     <>
+      {/* Overlay */}
       <div
         className={`fixed inset-0 z-40 bg-black/50 transition-opacity ${isOpen ? "opacity-100" : "pointer-events-none opacity-0"}`}
         onClick={close}
       />
+
+      {/* Drawer */}
       <aside
         className={`fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col bg-cream shadow-2xl transition-transform ${
           isOpen ? "translate-x-0" : "translate-x-full"

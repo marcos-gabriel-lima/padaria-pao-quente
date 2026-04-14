@@ -1,3 +1,4 @@
+// Modal de upsell — sugere bebidas quando o carrinho não tem nenhuma antes do checkout
 "use client";
 
 import { useEffect, useState } from "react";

@@ -1,17 +1,18 @@
+// Header sticky da loja — logo, status aberto/fechado, botão WhatsApp e carrinho
 "use client";
 
 import { useEffect, useState } from "react";
 import { ShoppingBag, Clock, MessageCircle } from "lucide-react";
 import { statusLabel } from "@/lib/business-hours";
 import { useCart } from "@/store/cart";
-
-const WHATSAPP_LINK = "https://wa.me/5517997749740?text=" + encodeURIComponent("Olá! Gostaria de fazer um pedido.");
+import { WHATSAPP_LINK } from "@/lib/constants";
 
 export default function Header() {
   const [status, setStatus] = useState(() => statusLabel());
   const count = useCart((s) => s.count());
   const open = useCart((s) => s.open);
 
+  // Atualiza status aberto/fechado a cada minuto
   useEffect(() => {
     const id = setInterval(() => setStatus(statusLabel()), 60_000);
     return () => clearInterval(id);
@@ -33,7 +34,7 @@ export default function Header() {
           </div>
         </a>
 
-        {/* Actions */}
+        {/* Ações: WhatsApp + Carrinho */}
         <div className="flex items-center gap-2">
           <a
             href={WHATSAPP_LINK}

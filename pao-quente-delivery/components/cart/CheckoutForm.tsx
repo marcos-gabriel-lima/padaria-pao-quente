@@ -1,3 +1,4 @@
+// Formulário de checkout — dados do cliente, endereço, pagamento e envio via WhatsApp
 "use client";
 
 import { useState } from "react";
@@ -5,10 +6,9 @@ import { ArrowLeft, Banknote, CreditCard, QrCode, CheckCircle2 } from "lucide-re
 import { useCart, type CustomerInfo } from "@/store/cart";
 import { formatBRL } from "@/lib/money";
 import { buildOrderMessage, whatsappLink } from "@/lib/whatsapp";
+import { WHATSAPP_NUMBER } from "@/lib/constants";
 
 type Payment = "dinheiro" | "cartao" | "pix";
-
-const WHATSAPP_NUMBER = "5517997749740";
 
 export default function CheckoutForm({ onBack }: { onBack: () => void }) {
   const items = useCart((s) => s.items);
@@ -144,6 +144,7 @@ export default function CheckoutForm({ onBack }: { onBack: () => void }) {
           <input className="input" value={form.reference} onChange={(e) => update("reference", e.target.value)} />
         </div>
 
+        {/* Seleção de forma de pagamento */}
         <div>
           <label className="label">Forma de pagamento</label>
           <div className="grid grid-cols-3 gap-2">

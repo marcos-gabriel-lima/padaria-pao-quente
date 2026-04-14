@@ -1,13 +1,12 @@
+// Footer da loja — logo, endereço, horário, contato e link WhatsApp
 import { MapPin, Phone, Clock, MessageCircle } from "lucide-react";
-
-const WHATSAPP_NUMBER = "5517997749740";
-const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Olá! Gostaria de fazer um pedido.")}`;
+import { WHATSAPP_LINK } from "@/lib/constants";
 
 export default function Footer() {
   return (
     <footer className="mt-10 bg-coffee-800 text-cream">
       <div className="mx-auto max-w-6xl px-4 py-10">
-        {/* Top section: logo + CTA */}
+        {/* Topo: logo + CTA WhatsApp */}
         <div className="mb-8 flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/favicon.svg" alt="Pão Quente" className="h-14 w-14" />
@@ -28,7 +27,7 @@ export default function Footer() {
           </a>
         </div>
 
-        {/* Info grid */}
+        {/* Grid de informações */}
         <div className="grid gap-6 border-t border-coffee-700 pt-8 sm:grid-cols-3">
           <div className="text-sm">
             <h4 className="mb-2 flex items-center gap-2 font-semibold">

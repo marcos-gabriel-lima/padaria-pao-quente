@@ -1,3 +1,4 @@
+// GET /api/products — lista pública de produtos (cardápio)
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { products } from "@/db/schema";

@@ -1,3 +1,4 @@
+// GET /api/admin/orders — lista todos os pedidos (admin)
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { orders } from "@/db/schema";

@@ -1,3 +1,4 @@
+// PATCH/DELETE /api/admin/products/:id — editar ou excluir produto
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";

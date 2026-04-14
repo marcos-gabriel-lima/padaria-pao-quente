@@ -1,4 +1,4 @@
-// Rate limiting para prevenir ataques de brute force
+// Rate limiting em memória — previne brute force no login (5 tentativas / 5 min por IP)
 const requestCounts = new Map<string, { count: number; resetTime: number }>();
 
 const DEFAULT_WINDOW_MS = 5 * 60 * 1000; // 5 minutos

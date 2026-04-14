@@ -1,21 +1,26 @@
-import { sqliteTable, integer, text, real } from "drizzle-orm/sqlite-core";
+// Schema do banco Postgres (Supabase) — tabelas products e orders, tipos e categorias
+import { pgTable, serial, text, doublePrecision, integer, boolean, timestamp, pgEnum } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
-export const products = sqliteTable("products", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const availabilityEnum = pgEnum("availability", ["available", "unavailable", "unlimited"]);
+export const paymentMethodEnum = pgEnum("payment_method", ["dinheiro", "cartao", "pix"]);
+export const orderStatusEnum = pgEnum("order_status", ["aguardando_pagamento", "a_caminho", "entregue"]);
+
+export const products = pgTable("products", {
+  id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description").notNull().default(""),
-  price: real("price").notNull(),
+  price: doublePrecision("price").notNull(),
   category: text("category").notNull(),
   imageUrl: text("image_url").notNull().default(""),
-  availability: text("availability", { enum: ["available", "unavailable", "unlimited"] }).notNull().default("unlimited"),
+  availability: availabilityEnum("availability").notNull().default("unlimited"),
   stock: integer("stock").notNull().default(0),
-  featured: integer("featured", { mode: "boolean" }).notNull().default(false),
-  createdAt: text("created_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
+  featured: boolean("featured").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`now()`),
 });
 
-export const orders = sqliteTable("orders", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const orders = pgTable("orders", {
+  id: serial("id").primaryKey(),
   customerName: text("customer_name").notNull(),
   customerPhone: text("customer_phone").notNull(),
   street: text("street").notNull(),
@@ -23,16 +28,12 @@ export const orders = sqliteTable("orders", {
   neighborhood: text("neighborhood").notNull(),
   complement: text("complement").default(""),
   reference: text("reference").default(""),
-  paymentMethod: text("payment_method", { enum: ["dinheiro", "cartao", "pix"] }).notNull(),
-  changeFor: real("change_for"),
-  total: real("total").notNull(),
-  status: text("status", {
-    enum: ["aguardando_pagamento", "a_caminho", "entregue"],
-  })
-    .notNull()
-    .default("aguardando_pagamento"),
+  paymentMethod: paymentMethodEnum("payment_method").notNull(),
+  changeFor: doublePrecision("change_for"),
+  total: doublePrecision("total").notNull(),
+  status: orderStatusEnum("status").notNull().default("aguardando_pagamento"),
   itemsJson: text("items_json").notNull(),
-  createdAt: text("created_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().default(sql`now()`),
 });
 
 export type Product = typeof products.$inferSelect;

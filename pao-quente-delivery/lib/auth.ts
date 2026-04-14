@@ -1,3 +1,4 @@
+// Autenticação admin — JWT com cookie httpOnly (sign, verify, cookie helpers)
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 

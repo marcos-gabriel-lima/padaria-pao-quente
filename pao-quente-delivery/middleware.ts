@@ -1,3 +1,4 @@
+// Middleware de proteção — redireciona para login se admin não autenticado
 import { NextResponse, type NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 

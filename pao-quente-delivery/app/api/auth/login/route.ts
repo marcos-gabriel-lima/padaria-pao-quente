@@ -1,3 +1,4 @@
+// POST /api/auth/login — autentica admin com usuário/senha e seta cookie JWT
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { signAdminToken, setAdminCookie } from "@/lib/auth";

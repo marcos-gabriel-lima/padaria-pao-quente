@@ -1,3 +1,4 @@
+// PATCH /api/admin/orders/:id — atualiza status do pedido
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";

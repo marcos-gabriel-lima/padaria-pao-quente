@@ -1,6 +1,5 @@
-// Horário oficial Pão Quente
-// Segunda a Sábado: 05:00–19:00
-// Domingo: 05:00–12:00
+// Horário de funcionamento — calcula se está aberta e monta label de status
+// Segunda a Sábado: 05h–19h | Domingo: 05h–12h
 
 export type Schedule = { open: number; close: number } | null;
 

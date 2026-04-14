@@ -1,3 +1,4 @@
+// Estado global do carrinho — itens, quantidade, cliente e persistência em localStorage
 "use client";
 
 import { create } from "zustand";

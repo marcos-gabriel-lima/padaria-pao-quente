@@ -1,5 +1,6 @@
+// Layout do painel administrativo — header com navegação e botão de logout
 import Link from "next/link";
-import LogoutButton from "@/components/LogoutButton";
+import LogoutButton from "@/components/admin/LogoutButton";
 
 export default function PanelLayout({ children }: { children: React.ReactNode }) {
   return (

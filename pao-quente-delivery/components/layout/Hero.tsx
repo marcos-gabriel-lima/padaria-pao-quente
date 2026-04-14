@@ -1,7 +1,10 @@
+// Hero banner — seção principal com CTA, ilustração animada do pão e link WhatsApp
+import { WHATSAPP_LINK } from "@/lib/constants";
+
 export default function Hero() {
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-coffee-600 via-coffee-700 to-coffee-800 text-cream">
-      {/* Decorative bread shapes */}
+      {/* Efeitos decorativos de fundo */}
       <div className="pointer-events-none absolute -right-10 -top-10 h-64 w-64 rounded-full bg-coffee-500/20 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-amber-400/10 blur-2xl" />
 
@@ -27,7 +30,7 @@ export default function Hero() {
               Ver cardápio
             </a>
             <a
-              href="https://wa.me/5517997749740"
+              href={WHATSAPP_LINK}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-cream/30 px-6 py-3 font-bold text-cream transition hover:bg-cream/10"
@@ -37,10 +40,9 @@ export default function Hero() {
           </div>
         </div>
 
-        {/* Decorative icon */}
+        {/* Ilustração animada do pão (desktop) */}
         <div className="hidden shrink-0 sm:block">
           <div className="relative">
-            {/* Glow pulse behind the bread */}
             <div className="absolute inset-0 animate-pulse rounded-full bg-amber-400/20 blur-2xl" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img

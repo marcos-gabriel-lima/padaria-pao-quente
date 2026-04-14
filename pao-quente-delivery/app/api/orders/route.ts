@@ -1,3 +1,4 @@
+// POST /api/orders — cria pedido, valida estoque e desconta quantidade
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";

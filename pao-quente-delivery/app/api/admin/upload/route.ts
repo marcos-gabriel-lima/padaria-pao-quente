@@ -1,5 +1,6 @@
+// POST /api/admin/upload — upload seguro de imagem (magic bytes, limite 2MB, max 500 arquivos)
 import { NextResponse } from "next/server";
-import { writeFile, mkdir, readdir, unlink } from "fs/promises";
+import { writeFile, mkdir, readdir } from "fs/promises";
 import { existsSync } from "fs";
 import path from "path";
 import crypto from "crypto";

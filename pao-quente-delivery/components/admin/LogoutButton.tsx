@@ -1,3 +1,4 @@
+// Botão de logout do painel administrativo
 "use client";
 
 import { LogOut } from "lucide-react";

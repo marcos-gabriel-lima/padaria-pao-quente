@@ -1,3 +1,4 @@
+// GET/POST /api/admin/products — CRUD de produtos (admin autenticado)
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";

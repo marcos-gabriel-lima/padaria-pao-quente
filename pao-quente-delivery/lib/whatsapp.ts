@@ -1,3 +1,4 @@
+// Montagem da mensagem de pedido e link do WhatsApp
 import { formatBRL } from "./money";
 
 export type CheckoutPayload = {
