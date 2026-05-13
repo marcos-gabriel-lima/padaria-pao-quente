@@ -54,7 +54,7 @@ export async function POST(req: Request) {
     const ext = EXT_MAP[detectedMime];
     const filename = `pq/images/${crypto.randomUUID()}${ext}`;
 
-    const blob = await put(filename, buffer, {
+    const blob = await put(filename, Buffer.from(buffer), {
       access: "public",
       addRandomSuffix: false,
       contentType: detectedMime,
