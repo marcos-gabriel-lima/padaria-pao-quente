@@ -1,10 +1,9 @@
 // PATCH/DELETE /api/admin/products/:id — editar ou excluir produto
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { db } from "@/db";
-import { products, CATEGORIES } from "@/db/schema";
+import { CATEGORIES } from "@/db/schema";
 import { getAdminFromCookies } from "@/lib/auth";
-import { eq } from "drizzle-orm";
+import { getCatalog, saveCatalog } from "@/lib/blob-store";
 
 const updateSchema = z.object({
   name: z.string().min(2).optional(),
@@ -13,28 +12,50 @@ const updateSchema = z.object({
   category: z.enum(CATEGORIES).optional(),
   imageUrl: z
     .string()
-    .url()
-    .refine((u) => { try { return new URL(u).protocol === "https:"; } catch { return false; } }, { message: "Apenas URLs https são permitidas" })
-    .or(z.literal(""))
+    .refine(
+      (u) => u === "" || (() => { try { return new URL(u).protocol === "https:"; } catch { return false; } })(),
+      { message: "Apenas URLs https são permitidas" }
+    )
     .optional(),
   availability: z.enum(["available", "unavailable", "unlimited"]).optional(),
   stock: z.number().int().nonnegative().optional(),
   featured: z.boolean().optional(),
 });
 
+export const dynamic = "force-dynamic";
+
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!(await getAdminFromCookies())) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  const { id } = await params;
-  const body = await req.json();
-  const parsed = updateSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
-  const updated = await db.update(products).set(parsed.data).where(eq(products.id, Number(id))).returning();
-  return NextResponse.json(updated[0]);
+  try {
+    const { id } = await params;
+    const body = await req.json();
+    const parsed = updateSchema.safeParse(body);
+    if (!parsed.success) return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
+
+    const products = await getCatalog();
+    const idx = products.findIndex((p) => p.id === Number(id));
+    if (idx === -1) return NextResponse.json({ error: "Produto não encontrado" }, { status: 404 });
+
+    const updated = { ...products[idx], ...parsed.data };
+    const newList = [...products];
+    newList[idx] = updated;
+    await saveCatalog(newList);
+    return NextResponse.json(updated);
+  } catch (error) {
+    console.error("PATCH /api/admin/products error:", error);
+    return NextResponse.json({ error: "Erro ao atualizar produto" }, { status: 500 });
+  }
 }
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!(await getAdminFromCookies())) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  const { id } = await params;
-  await db.delete(products).where(eq(products.id, Number(id)));
-  return NextResponse.json({ ok: true });
+  try {
+    const { id } = await params;
+    const products = await getCatalog();
+    await saveCatalog(products.filter((p) => p.id !== Number(id)));
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("DELETE /api/admin/products error:", error);
+    return NextResponse.json({ error: "Erro ao excluir produto" }, { status: 500 });
+  }
 }

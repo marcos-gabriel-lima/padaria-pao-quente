@@ -1,10 +1,9 @@
 // GET/POST /api/admin/products — CRUD de produtos (admin autenticado)
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { db } from "@/db";
-import { products, CATEGORIES } from "@/db/schema";
+import { CATEGORIES } from "@/db/schema";
 import { getAdminFromCookies } from "@/lib/auth";
-import { desc } from "drizzle-orm";
+import { getCatalog, saveCatalog, nextId } from "@/lib/blob-store";
 
 const productSchema = z.object({
   name: z.string().min(2),
@@ -13,25 +12,45 @@ const productSchema = z.object({
   category: z.enum(CATEGORIES),
   imageUrl: z
     .string()
-    .url()
-    .refine((u) => { try { return new URL(u).protocol === "https:"; } catch { return false; } }, { message: "Apenas URLs https são permitidas" })
-    .or(z.literal("")),
+    .refine(
+      (u) => u === "" || (() => { try { return new URL(u).protocol === "https:"; } catch { return false; } })(),
+      { message: "Apenas URLs https são permitidas" }
+    ),
   availability: z.enum(["available", "unavailable", "unlimited"]).default("unlimited"),
   stock: z.number().int().nonnegative().default(0),
   featured: z.boolean().default(false),
 });
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   if (!(await getAdminFromCookies())) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  const all = await db.select().from(products).orderBy(desc(products.id));
-  return NextResponse.json(all);
+  try {
+    const products = await getCatalog();
+    return NextResponse.json([...products].sort((a, b) => b.id - a.id));
+  } catch (error) {
+    console.error("GET /api/admin/products error:", error);
+    return NextResponse.json({ error: "Erro ao buscar produtos" }, { status: 500 });
+  }
 }
 
 export async function POST(req: Request) {
   if (!(await getAdminFromCookies())) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  const body = await req.json();
-  const parsed = productSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
-  const inserted = await db.insert(products).values(parsed.data).returning();
-  return NextResponse.json(inserted[0]);
+  try {
+    const body = await req.json();
+    const parsed = productSchema.safeParse(body);
+    if (!parsed.success) return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
+
+    const products = await getCatalog();
+    const newProduct = {
+      ...parsed.data,
+      id: nextId(products),
+      createdAt: new Date().toISOString(),
+    };
+    await saveCatalog([...products, newProduct]);
+    return NextResponse.json(newProduct);
+  } catch (error) {
+    console.error("POST /api/admin/products error:", error);
+    return NextResponse.json({ error: "Erro ao criar produto" }, { status: 500 });
+  }
 }

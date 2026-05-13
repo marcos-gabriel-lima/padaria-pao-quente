@@ -1,12 +1,17 @@
 // GET /api/admin/orders — lista todos os pedidos (admin)
 import { NextResponse } from "next/server";
-import { db } from "@/db";
-import { orders } from "@/db/schema";
 import { getAdminFromCookies } from "@/lib/auth";
-import { desc } from "drizzle-orm";
+import { getOrders } from "@/lib/blob-store";
+
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   if (!(await getAdminFromCookies())) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  const all = await db.select().from(orders).orderBy(desc(orders.id));
-  return NextResponse.json(all);
+  try {
+    const orders = await getOrders();
+    return NextResponse.json([...orders].sort((a, b) => b.id - a.id));
+  } catch (error) {
+    console.error("GET /api/admin/orders error:", error);
+    return NextResponse.json({ error: "Erro ao buscar pedidos" }, { status: 500 });
+  }
 }

@@ -1,9 +1,7 @@
 // POST /api/orders — cria pedido, valida estoque e desconta quantidade
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { db } from "@/db";
-import { orders, products } from "@/db/schema";
-import { eq, inArray } from "drizzle-orm";
+import { getCatalog, saveCatalog, getOrders, saveOrders, nextId } from "@/lib/blob-store";
 
 const orderSchema = z.object({
   customerName: z.string().min(2),
@@ -25,42 +23,44 @@ const orderSchema = z.object({
     .min(1),
 });
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: Request) {
-  const body = await req.json();
-  const parsed = orderSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: "Dados inválidos", issues: parsed.error.flatten() }, { status: 400 });
-  }
-  const data = parsed.data;
-
-  const ids = data.items.map((i) => i.id);
-  const dbProducts = await db.select().from(products).where(inArray(products.id, ids));
-  if (dbProducts.length !== ids.length) {
-    return NextResponse.json({ error: "Produto inexistente" }, { status: 400 });
-  }
-  // Check availability and stock for each item
-  for (const item of data.items) {
-    const p = dbProducts.find((pp) => pp.id === item.id)!;
-    if (p.availability === "unavailable") {
-      return NextResponse.json({ error: `Produto indisponível: ${p.name}` }, { status: 400 });
+  try {
+    const body = await req.json();
+    const parsed = orderSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Dados inválidos", issues: parsed.error.flatten() }, { status: 400 });
     }
-    if (p.availability === "available" && p.stock < item.quantity) {
-      return NextResponse.json(
-        { error: `Estoque insuficiente para ${p.name}. Restam ${p.stock} unidade(s).` },
-        { status: 400 }
-      );
+    const data = parsed.data;
+
+    const catalog = await getCatalog();
+
+    // Valida disponibilidade e estoque
+    for (const item of data.items) {
+      const p = catalog.find((pp) => pp.id === item.id);
+      if (!p) return NextResponse.json({ error: "Produto inexistente" }, { status: 400 });
+      if (p.availability === "unavailable") {
+        return NextResponse.json({ error: `Produto indisponível: ${p.name}` }, { status: 400 });
+      }
+      if (p.availability === "available" && p.stock < item.quantity) {
+        return NextResponse.json(
+          { error: `Estoque insuficiente para ${p.name}. Restam ${p.stock} unidade(s).` },
+          { status: 400 }
+        );
+      }
     }
-  }
 
-  const itemsResolved = data.items.map((i) => {
-    const p = dbProducts.find((pp) => pp.id === i.id)!;
-    return { id: p.id, name: p.name, unitPrice: p.price, quantity: i.quantity };
-  });
-  const total = itemsResolved.reduce((acc, i) => acc + i.unitPrice * i.quantity, 0);
+    const itemsResolved = data.items.map((i) => {
+      const p = catalog.find((pp) => pp.id === i.id)!;
+      return { id: p.id, name: p.name, unitPrice: p.price, quantity: i.quantity };
+    });
+    const total = itemsResolved.reduce((acc, i) => acc + i.unitPrice * i.quantity, 0);
 
-  const inserted = await db
-    .insert(orders)
-    .values({
+    // Salva pedido
+    const orders = await getOrders();
+    const newOrder = {
+      id: nextId(orders),
       customerName: data.customerName,
       customerPhone: data.customerPhone,
       street: data.street,
@@ -71,24 +71,30 @@ export async function POST(req: Request) {
       paymentMethod: data.paymentMethod,
       changeFor: data.changeFor ?? null,
       total,
+      status: "aguardando_pagamento" as const,
       itemsJson: JSON.stringify(itemsResolved),
-    })
-    .returning();
+      createdAt: new Date().toISOString(),
+    };
+    await saveOrders([...orders, newOrder]);
 
-  // Decrement stock for "available" products and auto-mark unavailable if stock hits 0
-  for (const item of data.items) {
-    const p = dbProducts.find((pp) => pp.id === item.id)!;
-    if (p.availability === "available") {
+    // Desconta estoque dos produtos com disponibilidade "available"
+    let catalogChanged = false;
+    const updatedCatalog = catalog.map((p) => {
+      const item = data.items.find((i) => i.id === p.id);
+      if (!item || p.availability !== "available") return p;
+      catalogChanged = true;
       const newStock = p.stock - item.quantity;
-      await db
-        .update(products)
-        .set({
-          stock: newStock,
-          ...(newStock <= 0 ? { availability: "unavailable" as const } : {}),
-        })
-        .where(eq(products.id, p.id));
-    }
-  }
+      return {
+        ...p,
+        stock: newStock,
+        availability: newStock <= 0 ? ("unavailable" as const) : p.availability,
+      };
+    });
+    if (catalogChanged) await saveCatalog(updatedCatalog);
 
-  return NextResponse.json({ order: inserted[0], items: itemsResolved, total });
+    return NextResponse.json({ order: newOrder, items: itemsResolved, total });
+  } catch (error) {
+    console.error("POST /api/orders error:", error);
+    return NextResponse.json({ error: "Erro ao criar pedido" }, { status: 500 });
+  }
 }
