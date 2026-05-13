@@ -8,12 +8,13 @@ import { useCart } from "@/store/cart";
 import { WHATSAPP_LINK } from "@/lib/constants";
 
 export default function Header() {
-  const [status, setStatus] = useState(() => statusLabel());
+  const [status, setStatus] = useState<ReturnType<typeof statusLabel> | null>(null);
   const count = useCart((s) => s.count());
   const open = useCart((s) => s.open);
 
-  // Atualiza status aberto/fechado a cada minuto
+  // Calcula status apenas no cliente para evitar hydration mismatch (server/client têm horários diferentes)
   useEffect(() => {
+    setStatus(statusLabel());
     const id = setInterval(() => setStatus(statusLabel()), 60_000);
     return () => clearInterval(id);
   }, []);
@@ -27,10 +28,12 @@ export default function Header() {
           <img src="/favicon.svg" alt="Pão Quente" className="h-10 w-10 drop-shadow-md sm:h-12 sm:w-12" />
           <div>
             <h1 className="font-display text-lg leading-tight text-coffee-800 sm:text-2xl">Pão Quente</h1>
-            <div className={`flex items-center gap-1 text-xs font-semibold ${status.open ? "text-green-700" : "text-red-700"}`}>
-              <Clock className="h-3 w-3" />
-              {status.label}
-            </div>
+            {status && (
+              <div className={`flex items-center gap-1 text-xs font-semibold ${status.open ? "text-green-700" : "text-red-700"}`}>
+                <Clock className="h-3 w-3" />
+                {status.label}
+              </div>
+            )}
           </div>
         </a>
 

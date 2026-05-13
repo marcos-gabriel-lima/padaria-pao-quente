@@ -13,8 +13,15 @@ export default function Menu() {
 
   useEffect(() => {
     fetch("/api/products")
-      .then((r) => r.json())
-      .then(setProducts);
+      .then((r) => {
+        if (!r.ok) throw new Error(`Erro ${r.status}`);
+        return r.json();
+      })
+      .then(setProducts)
+      .catch((err) => {
+        console.error("Erro ao carregar cardápio:", err);
+        setProducts([]);
+      });
   }, []);
 
   const featured = useMemo(() => products?.filter((p) => p.featured && p.availability !== "unavailable") ?? [], [products]);
