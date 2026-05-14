@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getAdminFromCookies } from "@/lib/auth";
 import { getOrders, saveOrders } from "@/lib/blob-store";
+import { logger } from "@/lib/logger";
 
 const schema = z.object({
   status: z.enum(["aguardando_pagamento", "a_caminho", "entregue"]),
@@ -28,7 +29,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     await saveOrders(newList);
     return NextResponse.json(updated);
   } catch (error) {
-    console.error("PATCH /api/admin/orders error:", error);
+    logger.error("PATCH /api/admin/orders/:id", { error: String(error) });
     return NextResponse.json({ error: "Erro ao atualizar pedido" }, { status: 500 });
   }
 }

@@ -1,3 +1,4 @@
+// Página de login do painel administrativo — autentica via /api/auth/login e redireciona para pedidos
 "use client";
 
 import { useState } from "react";

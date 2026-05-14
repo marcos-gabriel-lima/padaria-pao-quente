@@ -13,8 +13,9 @@ export default function UpsellModal({ onClose, onSkip }: { onClose: () => void; 
 
   useEffect(() => {
     fetch("/api/products")
-      .then((r) => r.json())
-      .then((all: Product[]) => setBeverages(all.filter((p) => p.category === "Bebidas" && p.availability !== "unavailable")));
+      .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
+      .then((all: Product[]) => setBeverages(all.filter((p) => p.category === "Bebidas" && p.availability !== "unavailable")))
+      .catch(() => { /* modal mostra vazio se fetch falhar */ });
   }, []);
 
   function handleAdd(p: Product) {

@@ -1,3 +1,4 @@
+// Layout raiz da aplicação — define metadados SEO, Open Graph e fonte global
 import type { Metadata } from "next";
 import "./globals.css";
 

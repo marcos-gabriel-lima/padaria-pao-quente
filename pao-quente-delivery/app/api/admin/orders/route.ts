@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { getAdminFromCookies } from "@/lib/auth";
 import { getOrders } from "@/lib/blob-store";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +12,7 @@ export async function GET() {
     const orders = await getOrders();
     return NextResponse.json([...orders].sort((a, b) => b.id - a.id));
   } catch (error) {
-    console.error("GET /api/admin/orders error:", error);
+    logger.error("GET /api/admin/orders", { error: String(error) });
     return NextResponse.json({ error: "Erro ao buscar pedidos" }, { status: 500 });
   }
 }

@@ -1,3 +1,4 @@
+// Painel de produtos — listagem, filtros, criação, edição e exclusão de itens do cardápio
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -31,7 +32,10 @@ const empty: FormState = {
 
 function isSafeImageUrl(url: string): boolean {
   if (!url) return false;
-  try { return new URL(url).protocol === "https:"; } catch { return false; }
+  try {
+    const { protocol, hostname } = new URL(url);
+    return protocol === "https:" && hostname.endsWith(".blob.vercel-storage.com");
+  } catch { return false; }
 }
 
 export default function AdminProductsPage() {
@@ -59,8 +63,11 @@ export default function AdminProductsPage() {
   }, [items, filterCategory, filterAvailable, filterFeatured]);
 
   async function load() {
-    const res = await fetch("/api/admin/products");
-    setItems(await res.json());
+    try {
+      const res = await fetch("/api/admin/products");
+      if (!res.ok) return;
+      setItems(await res.json());
+    } catch { /* erro de rede — mantém estado atual */ }
   }
   useEffect(() => {
     load();
@@ -91,7 +98,7 @@ export default function AdminProductsPage() {
     e.preventDefault();
     setSaveError(null);
     if (form.imageUrl && !isSafeImageUrl(form.imageUrl)) {
-      setSaveError("URL da imagem deve usar protocolo https://");
+      setSaveError("URL deve ser do storage da Vercel (*.blob.vercel-storage.com). Use a opção de upload.");
       return;
     }
     setSaving(true);

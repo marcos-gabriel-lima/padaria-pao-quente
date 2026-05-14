@@ -12,16 +12,27 @@ export default function Menu() {
   const [query, setQuery] = useState("");
 
   useEffect(() => {
-    fetch("/api/products")
-      .then((r) => {
-        if (!r.ok) throw new Error(`Erro ${r.status}`);
-        return r.json();
-      })
-      .then(setProducts)
-      .catch((err) => {
-        console.error("Erro ao carregar cardápio:", err);
-        setProducts([]);
-      });
+    let cancelled = false;
+    let retries = 0;
+
+    function load() {
+      fetch("/api/products")
+        .then((r) => {
+          if (!r.ok) throw new Error(`Erro ${r.status}`);
+          return r.json();
+        })
+        .then((data) => { if (!cancelled) setProducts(data); })
+        .catch(() => {
+          if (cancelled) return;
+          // Retentar até 3x com 1,5s de espera: em Vercel serverless o cold start
+          // pode fazer a primeira requisição falhar antes da função estar pronta.
+          if (retries < 3) { retries++; setTimeout(load, 1500); }
+          else setProducts([]);
+        });
+    }
+
+    load();
+    return () => { cancelled = true; };
   }, []);
 
   const featured = useMemo(() => products?.filter((p) => p.featured && p.availability !== "unavailable") ?? [], [products]);

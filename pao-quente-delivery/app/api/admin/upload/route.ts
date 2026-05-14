@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import crypto from "crypto";
 import { getAdminFromCookies } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/rateLimit";
+import { getTrustedIp } from "@/lib/ip";
 
 const MAX_SIZE = 2 * 1024 * 1024; // 2 MB
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -26,6 +28,11 @@ const EXT_MAP: Record<string, string> = {
 export async function POST(req: Request) {
   if (!(await getAdminFromCookies())) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  const ip = getTrustedIp(req);
+  if (!checkRateLimit(ip, 30, 60_000)) {
+    return NextResponse.json({ error: "Muitos uploads. Aguarde um momento." }, { status: 429 });
   }
 
   const formData = await req.formData();

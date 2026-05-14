@@ -1,3 +1,4 @@
+// Painel de pedidos — listagem em tempo real (polling 15s), filtro por status e atualização de andamento
 "use client";
 
 import { useEffect, useState } from "react";
@@ -27,8 +28,11 @@ export default function AdminOrdersPage() {
   const [expanded, setExpanded] = useState<number | null>(null);
 
   async function load() {
-    const res = await fetch("/api/admin/orders");
-    setOrders(await res.json());
+    try {
+      const res = await fetch("/api/admin/orders");
+      if (!res.ok) return;
+      setOrders(await res.json());
+    } catch { /* erro de rede — mantém estado atual */ }
   }
   useEffect(() => {
     load();
@@ -70,7 +74,7 @@ export default function AdminOrdersPage() {
       ) : (
         <ul className="space-y-3">
           {filtered.map((o) => {
-            const items: OrderItem[] = JSON.parse(o.itemsJson);
+            const items: OrderItem[] = (() => { try { return JSON.parse(o.itemsJson); } catch { return []; } })();
             const isOpen = expanded === o.id;
             return (
               <li key={o.id} className="rounded-2xl bg-white p-4 shadow ring-1 ring-coffee-100">
